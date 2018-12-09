@@ -1,0 +1,5 @@
+data/
+results/
+.env/
+.DS_Store
+.idea

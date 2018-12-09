@@ -1,0 +1,1 @@
+{"2-num_bbox_preds": 349, "1-num_gt_bboxes": 325, "5-recall_bbox": 0.8430769230769231, "3-bbox_matches": 274, "7-recall_spelling": 0.8153846153846154, "4-precision_bbox": 0.7851002865329513, "6-precision_spelling": 0.7593123209169055}
