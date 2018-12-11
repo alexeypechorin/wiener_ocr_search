@@ -1,0 +1,6 @@
+numpy==1.15.4
+opencv-python==3.4.4.19
+Pillow==5.3.0
+pytesseract==0.2.5
+symspellpy==6.3.3
+tabulate==0.8.2
