@@ -26,6 +26,8 @@ def test_ocr_no_stats(params):
         img_name = os.path.join(params.data_dir, name)
         img, result = get_data(img_name)
         labels, words = process_tessaract_data(result)
+        with open(os.path.join(params.results_dir, name[-5:] + '.json')) as f:
+            json.dump(words, f)
         img = show_bboxes_with_text(img, words, sym_spell=sym_spell)
         img.save(os.path.join(params.results_dir, name))
 

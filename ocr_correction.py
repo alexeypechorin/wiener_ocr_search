@@ -36,16 +36,16 @@ def correct(input_term, sym_spell):
 
     for term in input_term:
         max_edit_distance_lookup = 2
-        suggestion_verbosity = Verbosity.CLOSEST  # TOP, CLOSEST, ALL
+        suggestion_verbosity = Verbosity.ALL  # TOP, CLOSEST, ALL
         suggestions = sym_spell.lookup(term, suggestion_verbosity,
                                        max_edit_distance_lookup)
         # display suggestion term, term frequency, and edit distance
+        """
         for suggestion in suggestions:
             print("{}, {}, {}".format(suggestion.term, suggestion.count,
                                       suggestion.distance))
-
-        if len(suggestions) > 0: return suggestions[0].term
-        else: return ''
+        """
+        return suggestions
 
     # # lookup suggestions for multi-word input strings (supports compound
     # # splitting & merging)

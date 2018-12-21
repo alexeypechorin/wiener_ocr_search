@@ -35,7 +35,7 @@ def get_data(img_path, output_dir='results'):
     # img = cv2.threshold(img, 170, 255, cv2.THRESH_BINARY)[1]
 
     # Save the filtered image in the output directory
-    save_path = os.path.join(output_path, file_name + "_filter_" + str('dilate_erode_blur_bw') + ".jpg")
+    # save_path = os.path.join(output_path, file_name + "_filter_" + str('dilate_erode_blur_bw') + ".jpg")
     # cv2.imwrite(save_path, img)
 
     # Recognize text with tesseract for python

@@ -1,1 +1,1 @@
-{"7-recall_spelling": 0.236, "2-num_bbox_preds": 345, "5-recall_bbox": 0.732, "3-bbox_matches": 183, "1-num_gt_bboxes": 250, "4-precision_bbox": 0.5304347826086957, "6-precision_spelling": 0.17101449275362318}
+{"2-num_bbox_preds": 345, "7-recall_spelling": 0.396, "6-precision_spelling": 0.28695652173913044, "4-precision_bbox": 0.5304347826086957, "9-recall_at_200": 0.608, "1-num_gt_bboxes": 250, "3-bbox_matches": 183, "8-MRR": 0.45476462717508914, "5-recall_bbox": 0.732}

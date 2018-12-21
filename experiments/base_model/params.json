@@ -1,7 +1,7 @@
 {
   "dictionary_path": "--",
   "max_edit_distance": 0,
-  "iou_threshold_spelling": 0.5,
+  "iou_threshold_spelling": 0.2,
   "iou_threshold_bbox": 0.5,
   "image_preprocessing": "--",
   "data_dir": "data/wiener_zahi_clean"

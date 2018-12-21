@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import shutil
+from tqdm import tqdm
 import numpy as np
 
 # import torch
@@ -144,3 +145,45 @@ def load_checkpoint(checkpoint, model, optimizer=None):
         optimizer.load_state_dict(checkpoint['optim_dict'])
 
     return checkpoint
+
+def load_wiener_collections(data_dir, no_bboxes=True):
+    """
+    Returns wiener collection in searchable form
+    :param data_dir:
+           no_bboxes: set True if we return only words without bboxes for each one
+                      otherwise, we return json files as is
+    :return:
+    """
+
+    collections = os.listdir(data_dir)
+
+    collections = [coll for coll in collections if coll not in ['.', '..', '.DS_Store', '.json']]
+    collections = collections[:]
+    num_words = 0
+    # each document is a separate list
+    all_docs = []
+
+    with tqdm(total=len(collections)) as pbar:
+        for collection in collections:
+
+            directory = os.path.join(data_dir, collection)
+
+            json_files = os.listdir(directory)
+            json_files = [json_file for json_file in json_files if json_file.endswith('.json')]
+
+            for json_file in json_files:
+                with open(os.path.join(directory, json_file), 'r') as f:
+                    contents = json.load(f)
+
+                num_words += len(contents)
+                if no_bboxes:
+                    all_docs += [[word['word'] for word in contents]]
+                else:
+                    all_docs += [{'contents':contents, 'doc':os.path.join(directory,json_file)}]
+
+                # all_docs += [{'words': [word['word'] for word in contents], 'tag': json_file}]
+                # all_docs += [TaggedDocument(words=[word['word'] for word in contents], tags=[json_file])]
+
+            pbar.update(1)
+
+    return all_docs
