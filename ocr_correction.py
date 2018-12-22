@@ -1,6 +1,6 @@
 import os
 
-from symspellpy.symspellpy import SymSpell, Verbosity  # import the module
+# from symspellpy.symspellpy import SymSpell, Verbosity  # import the module
 
 def correct_ocr_errors(input_term, dictionary_path):
     sym_spell = load_symspell(dictionary_path)

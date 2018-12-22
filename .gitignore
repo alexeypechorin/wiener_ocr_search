@@ -1,4 +1,5 @@
 data/
+model_data/
 experiments/
 results/
 .env/

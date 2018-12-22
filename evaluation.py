@@ -3,7 +3,7 @@ import json
 import codecs
 import cv2
 from tesseracthelpers import show_bboxes_with_text
-from gensim.models import FastText
+# from gensim.models import FastText
 from ocr_correction import correct
 from scipy.spatial.distance import cdist, pdist, squareform
 import numpy as np

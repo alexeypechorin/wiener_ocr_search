@@ -1,3 +1,5 @@
+# coding=utf-8
+
 import os
 import numpy as np
 from evaluation import relative_to_abs_coord
@@ -7,6 +9,7 @@ from nltk.tokenize import word_tokenize
 import string
 from evaluation import build_phoc_descriptor
 from scipy.spatial.distance import cdist, pdist, squareform
+import time
 
 def load_as_words(data_dir):
     """
@@ -143,17 +146,18 @@ if __name__=='__main__':
         json.dump(unigrams, f)
 
     # make separate candidates dictionaries
-    candidates = build_phoc_descriptor(vocab_strings[:500000], phoc_unigrams=unigrams, unigram_levels=[1,2,4,8,16])
+    candidates = build_phoc_descriptor(vocab_strings, phoc_unigrams=unigrams, unigram_levels=[1,2,4,8,16])
 
     print('saving candidates...')
     # save candidates
-    np.save(os.path.join('model_data', 'candidates.npy'), candidates)
+    np.save(os.path.join('model_data', 'candidates_all.npy'), candidates)
     print('saved candidates...')
 
     queries = 'Der Warszawa Pact this is another Hitler pommern'.split()
-
+    tic = time.clock()
     results = run_query(queries, candidates, unigrams)
-
+    toc = time.clock()
+    print(toc - tic)
     clean_results = show_clean_results(queries, results, vocab_strings, vocabulary, words)
 
     print('end')
