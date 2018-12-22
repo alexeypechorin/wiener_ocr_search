@@ -22,7 +22,7 @@ def load_as_words(data_dir):
     collections = os.listdir(data_dir)
 
     collections = [coll for coll in collections if coll not in ['.', '..', '.DS_Store', '.json']]
-    collections = collections[:5]
+    collections = collections[:]
     num_words = 0
     vocabulary = {}
     words = []
@@ -106,19 +106,32 @@ if __name__=='__main__':
     # data_dir = '/media/data/datasets/wiener_tesseract'
     data_dir = os.path.join('data', 'all_wiener_segmented')
 
-    # create dictionary of words
-    vocabulary, words = load_as_words(data_dir)
-    vocab_strings = list(vocabulary.keys())
+    if not os.path.exists(os.path.join('model_data', 'vocabulary.json')):
+        print('creating vocabulary, words...')
+        # create dictionary of words
+        vocabulary, words = load_as_words(data_dir)
+        vocab_strings = list(vocabulary.keys())
 
-    # save
-    with open(os.path.join('model_data','vocabulary.json'), 'w') as f:
-        json.dump(vocabulary, f)
+        print('saving all words, data...')
+        # save
+        with open(os.path.join('model_data','vocabulary.json'), 'w') as f:
+            json.dump(vocabulary, f)
 
-    with open(os.path.join('model_data', 'words.json'), 'w') as f:
-        json.dump(words, f)
+        with open(os.path.join('model_data', 'words.json'), 'w') as f:
+            json.dump(words, f)
 
-    with open(os.path.join('model_data', 'vocab_strings.json'), 'w') as f:
-        json.dump(vocab_strings, f)
+        with open(os.path.join('model_data', 'vocab_strings.json'), 'w') as f:
+            json.dump(vocab_strings, f)
+    else:
+        print('loading vocabulary, words...')
+        with open(os.path.join('model_data','vocabulary.json'), 'r') as f:
+            vocabulary = json.load(f)
+
+        with open(os.path.join('model_data', 'words.json'), 'r') as f:
+            words = json.load(f)
+
+        with open(os.path.join('model_data', 'vocab_strings.json'), 'r') as f:
+            vocab_strings = json.load(f)
 
     # create unigrams for all vocabulary
     unigrams = [chr(i) for i in range(ord('a'), ord('z') + 1)]
@@ -129,10 +142,13 @@ if __name__=='__main__':
     with open(os.path.join('model_data', 'unigrams.json'), 'w') as f:
         json.dump(unigrams, f)
 
-    candidates = build_phoc_descriptor(vocab_strings, phoc_unigrams=unigrams, unigram_levels=[1,2,4,8,16])
+    # make separate candidates dictionaries
+    candidates = build_phoc_descriptor(vocab_strings[:500000], phoc_unigrams=unigrams, unigram_levels=[1,2,4,8,16])
 
+    print('saving candidates...')
     # save candidates
     np.save(os.path.join('model_data', 'candidates.npy'), candidates)
+    print('saved candidates...')
 
     queries = 'Der Warszawa Pact this is another Hitler pommern'.split()
 
@@ -141,9 +157,3 @@ if __name__=='__main__':
     clean_results = show_clean_results(queries, results, vocab_strings, vocabulary, words)
 
     print('end')
-
-
-
-
-
-
