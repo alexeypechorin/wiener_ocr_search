@@ -10,6 +10,13 @@ import string
 from evaluation import build_phoc_descriptor
 from scipy.spatial.distance import cdist, pdist, squareform
 import time
+from math import ceil
+import argparse
+
+parser = argparse.ArgumentParser() 
+parser.add_argument('--model_data_dir', default='model_data_deu')
+parser.add_argument('--data_dir', default='/media/data/datasets/wiener_tesseract_deu')
+parser.add_argument('--debug', action='store_true')
 
 def load_as_words(data_dir):
     """
@@ -106,34 +113,36 @@ def show_clean_results(queries, results, vocab_strings, vocabulary, words):
 
 
 if __name__=='__main__':
-    # data_dir = '/media/data/datasets/wiener_tesseract'
-    data_dir = os.path.join('data', 'all_wiener_segmented')
+    # args.data_dir = '/media/data/datasets/wiener_tesseract'
+    # args.data_dir = os.path.join('data', 'all_wiener_segmented')
+    
+    args = parser.parse_args()    
 
-    if not os.path.exists(os.path.join('model_data', 'vocabulary.json')):
+    if not os.path.isfile(os.path.join(args.model_data_dir, 'phoc_candidates.npy')) and not os.path.exists(os.path.join(args.model_data_dir, 'vocabulary.json')):
         print('creating vocabulary, words...')
         # create dictionary of words
-        vocabulary, words = load_as_words(data_dir)
+        vocabulary, words = load_as_words(args.data_dir)
         vocab_strings = list(vocabulary.keys())
 
         print('saving all words, data...')
         # save
-        with open(os.path.join('model_data','vocabulary.json'), 'w') as f:
+        with open(os.path.join(args.model_data_dir,'vocabulary.json'), 'w') as f:
             json.dump(vocabulary, f)
 
-        with open(os.path.join('model_data', 'words.json'), 'w') as f:
+        with open(os.path.join(args.model_data_dir, 'words.json'), 'w') as f:
             json.dump(words, f)
 
-        with open(os.path.join('model_data', 'vocab_strings.json'), 'w') as f:
+        with open(os.path.join(args.model_data_dir, 'vocab_strings.json'), 'w') as f:
             json.dump(vocab_strings, f)
-    else:
+    elif not os.path.isfile(os.path.join(args.model_data_dir, 'phoc_candidates.npy')) and not args.debug:
         print('loading vocabulary, words...')
-        with open(os.path.join('model_data','vocabulary.json'), 'r') as f:
+        with open(os.path.join(args.model_data_dir,'vocabulary.json'), 'r') as f:
             vocabulary = json.load(f)
 
-        with open(os.path.join('model_data', 'words.json'), 'r') as f:
+        with open(os.path.join(args.model_data_dir, 'words.json'), 'r') as f:
             words = json.load(f)
 
-        with open(os.path.join('model_data', 'vocab_strings.json'), 'r') as f:
+        with open(os.path.join(args.model_data_dir, 'vocab_strings.json'), 'r') as f:
             vocab_strings = json.load(f)
 
     # create unigrams for all vocabulary
@@ -142,22 +151,119 @@ if __name__=='__main__':
     unigrams += [chr(i) for i in range(ord('À'), ord('ü'))]
     unigrams = sorted(unigrams)
 
-    with open(os.path.join('model_data', 'unigrams.json'), 'w') as f:
+    with open(os.path.join(args.model_data_dir, 'unigrams.json'), 'w') as f:
         json.dump(unigrams, f)
+    
+    if not os.path.isfile(os.path.join(args.model_data_dir, 'candidates_all.npy')): 
+        # load the PHOC candidates
+        if os.path.isfile(os.path.join(args.model_data_dir, 'phoc_candidates.npy')): 
+            print('loading phoc candidates')
+            load_start = time.clock()
 
-    # make separate candidates dictionaries
-    candidates = build_phoc_descriptor(vocab_strings, phoc_unigrams=unigrams, unigram_levels=[1,2,4,8,16])
+            if args.debug: 
+                candidates = np.random.rand(2004, 1440)
+            else: 
+                candidates = np.load(os.path.join(args.model_data_dir, 'phoc_candidates.npy')) 
+        
+            load_end = time.clock() 
+            print(load_end - load_start) 
+        else: 
+            # make separate candidates dictionaries
+            candidates = build_phoc_descriptor(vocab_strings, phoc_unigrams=unigrams, unigram_levels=[1,2,4,8])
+            np.save(os.path.join(args.model_data_dir, 'phoc_candidates.npy'), candidates)
 
-    print('saving candidates...')
-    # save candidates
-    np.save(os.path.join('model_data', 'candidates_all.npy'), candidates)
+        print('candidates shape:', candidates.shape[0], candidates.shape[1])
+
+        # subtract mean and project candidates using Wy
+        print('loading Wy, mean_y...')
+        Wy = np.load(os.path.join(args.model_data_dir, 'Wy.npy'))
+        mean_y = np.load(os.path.join(args.model_data_dir, 'mean_y.npy'))
+ 
+        p_time = time.clock()    
+        print('subtracting mean, projecting...')
+        # subtract mean
+        candidates = candidates - np.transpose(mean_y).reshape(1, -1)
+    
+        # project into common subspace 
+        candidates = np.matmul(candidates, Wy)
+   
+        print('normalizing...')
+
+        # normalize candidates using the L2 norm
+        cand_norms = np.linalg.norm(candidates, axis=1)
+        cand_norms = np.reshape(cand_norms, (-1, 1))
+        candidates = candidates/cand_norms
+        p_time2 = time.clock()
+        print(p_time2 - p_time)
+
+        print('saving candidates...')
+        # save candidates
+        if not args.debug: 
+            np.save(os.path.join(args.model_data_dir, 'candidates_all.npy'), candidates)
+    else:
+        print('loading projected candidates...')
+        start_load = time.clock() 
+        candidates = np.load(os.path.join(args.model_data_dir, 'candidates_all.npy'))
+        print(time.clock() - start_load)
+
+
+    # find average distance to 20 nearest neighbors (hub matrix for CSLS)
+    print('finding nearest neighbors...')
+    num_nn = 20
+    block_size = 1000
+
+    if os.path.isfile(os.path.join(args.model_data_dir, 'hub.npy')) 
+        print('loading hub matrix...')
+        start_load = time.clock() 
+        summed = np.load(os.path.join(args.model_data_dir, 'hub.npy'))
+        print(time.clock() - start_load)
+
+        last_block = int((np.max(np.nonzero(hub))+1)/block_size)
+    else:
+        print('creating hub matrix...')
+        summed = np.zeros((candidates.shape[0], 1))
+        last_block = 0
+    
+    # try doing this block by block 
+    for i in tqdm(range(last_block, ceil(float(candidates.shape[0])/block_size))): 
+        start_idx = i*block_size
+        if i == ceil(float(candidates.shape[0])/block_size) - 1: 
+            end_idx = candidates.shape[1] # don't go beyond our range
+        else: 
+            end_idx = (i+1)*block_size
+
+        distances = np.matmul(candidates[start_idx: end_idx, :], np.transpose(candidates))
+
+        if i == 0: 
+            print('distances shape:', distances.shape[0], distances.shape[1])
+
+        sorted_dist = np.sort(distances, axis=-1)    
+        trunc_distances = sorted_dist[:, :num_nn]
+        summed[start_idx:end_idx, :] = np.reshape(np.sum(trunc_distances, axis=1)/num_nn, (-1,1))
+    
+        np.save(os.path.join(args.model_data_dir, 'hub.npy'), summed)
+    
+    print('hub matrix shape:', summed.shape[0], summed.shape[1])
+
+    # save hub matrix --> in the formula, this is r_20(y)
+    np.save(os.path.join(args.model_data_dir, 'hub.npy'), summed)
+
+    
+    # save a few number of candidates for later debugging purposes
+    np.save(os.path.join(args.model_data_dir, 'candidates_few.npy'), candidates[:1000,:])
+    
+    # save few number of items in hub_matrix for debugging purposes   
+    np.save(os.path.join(args.model_data_dir, 'hub_few.npy'), summed[:1000,:])
+    
+    # TODO --> need to redefine the run_query() function
+
     print('saved candidates...')
-
+    """ 
     queries = 'Der Warszawa Pact this is another Hitler pommern'.split()
     tic = time.clock()
     results = run_query(queries, candidates, unigrams)
     toc = time.clock()
     print(toc - tic)
     clean_results = show_clean_results(queries, results, vocab_strings, vocabulary, words)
-
+    """ 
     print('end')

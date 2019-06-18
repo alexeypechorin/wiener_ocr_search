@@ -24,15 +24,16 @@ def test_ocr_no_stats(params):
         print('---' + name + '---')
         # get reading from tesseract
         img_name = os.path.join(params.data_dir, name)
-        img, result = get_data(img_name)
+        img, result = get_data(img_name, lang=params.lang)
         labels, words = process_tessaract_data(result)
-        with open(os.path.join(params.results_dir, name[-5:] + '.json')) as f:
+        with open(os.path.join(params.results_dir, name[:-4] + '.json'), 'w') as f:
             json.dump(words, f)
         img = show_bboxes_with_text(img, words, sym_spell=sym_spell)
         img.save(os.path.join(params.results_dir, name))
 
 
 if __name__ == "__main__":
+    # the following creates the OCR output for the entire training data
     args = parser.parse_args()
 
     json_path = os.path.join(args.model_dir, 'params.json')
@@ -42,4 +43,26 @@ if __name__ == "__main__":
     params = utils.Params(json_path)
     params.args_to_params(args)
 
-    test_ocr_no_stats(params)
+    base_dirs = ['/media/data/datasets/wiener_cropped/wiener_images_cropped', '/media/data/datasets/wiener1_cropped/']
+
+    for base_dir in base_dirs: 
+        base_result_dir = 'wiener_tesseract_deu'
+        
+        # set german language settings
+        params.lang = 'deu'
+        collections = os.listdir(base_dir)
+
+        collections = [coll for coll in collections if coll not in ['.', '..', '.DS_Store']]
+
+        for collection in collections: 
+            params.data_dir = os.path.join(base_dir, collection)
+            params.results_dir = os.path.join(base_result_dir, collection)
+	
+   	    # create directories if they don't exist 
+            if not os.path.exists(params.data_dir): 
+                os.makedirs(params.data_dir)
+
+            if not os.path.exists(params.results_dir): 
+                os.makedirs(params.results_dir)
+
+            test_ocr_no_stats(params)

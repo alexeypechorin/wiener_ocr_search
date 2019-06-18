@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 from ocr_correction import correct
 
-def get_data(img_path, output_dir='results'):
+def get_data(img_path, output_dir='results', lang='eng'):
     # Read image using opencv
     img = cv2.imread(img_path)
 
@@ -40,7 +40,7 @@ def get_data(img_path, output_dir='results'):
 
     # Recognize text with tesseract for python
     # result = pytesseract.image_to_string(img, lang="deu")
-    result = pytesseract.image_to_data(img)
+    result = pytesseract.image_to_data(img, lang=lang)
     return img, result
 
 def process_tessaract_data(data_string):
