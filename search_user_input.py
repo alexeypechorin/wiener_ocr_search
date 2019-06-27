@@ -129,8 +129,8 @@ def show_clean_results(queries, results, vocab_strings, vocabulary, words, wiene
 
 def main_search_user_input(candidates_file_path, Wx_file_path, mean_x_file_path, hub_matrix_file_path,
                                vocabulary_file_path, words_file_path, vocab_strings_file_path, unigrams_file_path,
-                               query_results_directory_path):
-        if not args.query_is_done:
+                               query_results_directory_path, query_is_done, query_file, wiener_cropped_dir):
+        if not query_is_done:
                 print('loading all candidates')
                 tic_cands = time.process_time()
                 candidates = np.load(candidates_file_path)
@@ -153,14 +153,14 @@ def main_search_user_input(candidates_file_path, Wx_file_path, mean_x_file_path,
                 unigrams = json.load(f)
         toc_vocab = time.process_time()
         print(toc_vocab - tic_vocab, 'seconds...')
-        if args.query_file is not None:
-                with open(args.query_file, 'r') as f:
+        if query_file is not None:
+                with open(query_file, 'r') as f:
                         queries = f.read().split()
 
                 print('running queries from file')
                 tic = time.process_time()
 
-                if not args.query_is_done:
+                if not query_is_done:
                         # run the actual queries
                         result = run_query(queries, candidates, Wx, mean_x, hub_matrix, unigrams)
                         toc = time.process_time()
@@ -174,7 +174,7 @@ def main_search_user_input(candidates_file_path, Wx_file_path, mean_x_file_path,
 
                         # print out text results for each query and save images
                 show_clean_results(queries, result, vocab_strings, vocabulary, words,
-                                   wiener_dir=args.wiener_cropped_dir)
+                                   wiener_dir=wiener_cropped_dir)
         else:
                 query_string = input('word to search for: ')
 
@@ -186,7 +186,7 @@ def main_search_user_input(candidates_file_path, Wx_file_path, mean_x_file_path,
 
                         # print text results + save images
                         show_clean_results([query_string], result, vocab_strings, vocabulary, words,
-                                           wiener_dir=args.wiener_cropped_dir,
+                                           wiener_dir=wiener_cropped_dir,
                                            save_dir=query_results_directory_path)
 
                         # ask for user input again
@@ -208,4 +208,4 @@ if __name__=='__main__':
 
         main_search_user_input(candidates_file_path, Wx_file_path, mean_x_file_path, hub_matrix_file_path,
                                vocabulary_file_path, words_file_path, vocab_strings_file_path, unigrams_file_path,
-                               query_results_directory_path)
+                               query_results_directory_path, args.query_is_done, args.query_file, args.wiener_cropped_dir)
