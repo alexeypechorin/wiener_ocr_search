@@ -126,74 +126,86 @@ def show_clean_results(queries, results, vocab_strings, vocabulary, words, wiene
                                 # save image 
                                 cv2.imwrite(os.path.join(query_path, str(res_idx) + '_' + str(word_idx) + '_' + img_name), img)
 
-if __name__=='__main__': 
-        args = parser.parse_args()
-    
+
+def main_search_user_input(candidates_file_path, Wx_file_path, mean_x_file_path, hub_matrix_file_path,
+                               vocabulary_file_path, words_file_path, vocab_strings_file_path, unigrams_file_path,
+                               query_results_directory_path):
         if not args.query_is_done:
                 print('loading all candidates')
                 tic_cands = time.process_time()
-                candidates = np.load(os.path.join('model_data_deu', 'candidates_all.npy'))
+                candidates = np.load(candidates_file_path)
                 toc_cands = time.process_time()
                 print(toc_cands - tic_cands, 'seconds...')
 
                 print('loading Wx, mean_x, and hub_matrix...')
-                Wx = np.load(os.path.join('model_data_deu', 'Wx.npy'))
-                mean_x = np.load(os.path.join('model_data_deu', 'mean_x.npy'))
-                hub_matrix = np.load(os.path.join('model_data_deu', 'hub.npy'))
-        
-
+                Wx = np.load(Wx_file_path)
+                mean_x = np.load(mean_x_file_path)
+                hub_matrix = np.load(hub_matrix_file_path)
         print('loading vocabulary, words...')
         tic_vocab = time.process_time()
-        with open(os.path.join('model_data_deu','vocabulary.json'), 'r') as f:
-            vocabulary = json.load(f)
-
-        with open(os.path.join('model_data_deu', 'words.json'), 'r') as f:
-            words = json.load(f)
-
-        with open(os.path.join('model_data_deu', 'vocab_strings.json'), 'r') as f:
-            vocab_strings = json.load(f)
-        
-        with open(os.path.join('model_data_deu', 'unigrams.json'), 'r') as f: 
+        with open(vocabulary_file_path, 'r') as f:
+                vocabulary = json.load(f)
+        with open(words_file_path, 'r') as f:
+                words = json.load(f)
+        with open(vocab_strings_file_path, 'r') as f:
+                vocab_strings = json.load(f)
+        with open(unigrams_file_path, 'r') as f:
                 unigrams = json.load(f)
-        
         toc_vocab = time.process_time()
         print(toc_vocab - tic_vocab, 'seconds...')
-
-        if args.query_file is not None: 
-                with open(args.query_file, 'r') as f: 
+        if args.query_file is not None:
+                with open(args.query_file, 'r') as f:
                         queries = f.read().split()
 
                 print('running queries from file')
                 tic = time.process_time()
-                
-                if not args.query_is_done: 
+
+                if not args.query_is_done:
                         # run the actual queries
                         result = run_query(queries, candidates, Wx, mean_x, hub_matrix, unigrams)
                         toc = time.process_time()
-                        print(toc - tic, 'seconds...')          
-                        
+                        print(toc - tic, 'seconds...')
+
                         # save a small sample of results
                         short_result = result[:, 0:1000]
                         np.save('search_results.npy', short_result)
-                else: 
-                        result = np.load('search_results.npy')          
+                else:
+                        result = np.load('search_results.npy')
 
-                # print out text results for each query and save images
+                        # print out text results for each query and save images
                 show_clean_results(queries, result, vocab_strings, vocabulary, words,
                                    wiener_dir=args.wiener_cropped_dir)
-        else: 
+        else:
                 query_string = input('word to search for: ')
 
-                while query_string != 'q': 
+                while query_string != 'q':
                         tic = time.process_time()
                         result = run_query([query_string], candidates, Wx, mean_x, hub_matrix, unigrams)
                         toc = time.process_time()
-                        print(toc - tic, 'seconds...')          
-                        
+                        print(toc - tic, 'seconds...')
+
                         # print text results + save images
                         show_clean_results([query_string], result, vocab_strings, vocabulary, words,
-                                           wiener_dir=args.wiener_cropped_dir, 
-                                           save_dir='results_user_input')
-                        
+                                           wiener_dir=args.wiener_cropped_dir,
+                                           save_dir=query_results_directory_path)
+
                         # ask for user input again
                         query_string = input('word to search for: ')
+
+
+if __name__=='__main__':
+        args = parser.parse_args()
+        model_data_folder = 'model_data_deu'
+        candidates_file_path = os.path.join(model_data_folder, 'candidates_all.npy')
+        Wx_file_path = os.path.join(model_data_folder, 'Wx.npy')
+        mean_x_file_path = os.path.join(model_data_folder, 'mean_x.npy')
+        hub_matrix_file_path = os.path.join(model_data_folder, 'hub.npy')
+        vocabulary_file_path = os.path.join(model_data_folder, 'vocabulary.json')
+        words_file_path = os.path.join(model_data_folder, 'words.json')
+        vocab_strings_file_path = os.path.join(model_data_folder, 'vocab_strings.json')
+        unigrams_file_path = os.path.join(model_data_folder, 'unigrams.json')
+        query_results_directory_path = 'results_user_input'
+
+        main_search_user_input(candidates_file_path, Wx_file_path, mean_x_file_path, hub_matrix_file_path,
+                               vocabulary_file_path, words_file_path, vocab_strings_file_path, unigrams_file_path,
+                               query_results_directory_path)
