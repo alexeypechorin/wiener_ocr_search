@@ -131,28 +131,10 @@ def main_search_user_input(candidates_file_path, Wx_file_path, mean_x_file_path,
                                vocabulary_file_path, words_file_path, vocab_strings_file_path, unigrams_file_path,
                                query_results_directory_path, query_is_done, query_file, wiener_cropped_dir):
         if not query_is_done:
-                print('loading all candidates')
-                tic_cands = time.process_time()
-                candidates = np.load(candidates_file_path)
-                toc_cands = time.process_time()
-                print(toc_cands - tic_cands, 'seconds...')
-
-                print('loading Wx, mean_x, and hub_matrix...')
-                Wx = np.load(Wx_file_path)
-                mean_x = np.load(mean_x_file_path)
-                hub_matrix = np.load(hub_matrix_file_path)
-        print('loading vocabulary, words...')
-        tic_vocab = time.process_time()
-        with open(vocabulary_file_path, 'r') as f:
-                vocabulary = json.load(f)
-        with open(words_file_path, 'r') as f:
-                words = json.load(f)
-        with open(vocab_strings_file_path, 'r') as f:
-                vocab_strings = json.load(f)
-        with open(unigrams_file_path, 'r') as f:
-                unigrams = json.load(f)
-        toc_vocab = time.process_time()
-        print(toc_vocab - tic_vocab, 'seconds...')
+            Wx, candidates, hub_matrix, mean_x = load_model_data(Wx_file_path, candidates_file_path,
+                                                                 hub_matrix_file_path, mean_x_file_path)
+        unigrams, vocab_strings, vocabulary, words = load_vocabulary_data(unigrams_file_path, vocab_strings_file_path,
+                                                                          vocabulary_file_path, words_file_path)
         if query_file is not None:
                 with open(query_file, 'r') as f:
                         queries = f.read().split()
@@ -174,7 +156,8 @@ def main_search_user_input(candidates_file_path, Wx_file_path, mean_x_file_path,
 
                         # print out text results for each query and save images
                 show_clean_results(queries, result, vocab_strings, vocabulary, words,
-                                   wiener_dir=wiener_cropped_dir)
+                                   wiener_dir=wiener_cropped_dir,
+                                   save_dir=query_results_directory_path)
         else:
                 query_string = input('word to search for: ')
 
@@ -191,6 +174,35 @@ def main_search_user_input(candidates_file_path, Wx_file_path, mean_x_file_path,
 
                         # ask for user input again
                         query_string = input('word to search for: ')
+
+
+def load_vocabulary_data(unigrams_file_path, vocab_strings_file_path, vocabulary_file_path, words_file_path):
+    print('Loading vocabulary, words...')
+    tic_vocab = time.process_time()
+    with open(vocabulary_file_path, 'r') as f:
+        vocabulary = json.load(f)
+    with open(words_file_path, 'r') as f:
+        words = json.load(f)
+    with open(vocab_strings_file_path, 'r') as f:
+        vocab_strings = json.load(f)
+    with open(unigrams_file_path, 'r') as f:
+        unigrams = json.load(f)
+    toc_vocab = time.process_time()
+    print(toc_vocab - tic_vocab, 'seconds...')
+    return unigrams, vocab_strings, vocabulary, words
+
+
+def load_model_data(Wx_file_path, candidates_file_path, hub_matrix_file_path, mean_x_file_path):
+    print('Loading all candidates')
+    tic_cands = time.process_time()
+    candidates = np.load(candidates_file_path)
+    toc_cands = time.process_time()
+    print(toc_cands - tic_cands, 'seconds...')
+    print('Loading Wx, mean_x, and hub_matrix...')
+    Wx = np.load(Wx_file_path)
+    mean_x = np.load(mean_x_file_path)
+    hub_matrix = np.load(hub_matrix_file_path)
+    return Wx, candidates, hub_matrix, mean_x
 
 
 if __name__=='__main__':
