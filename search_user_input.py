@@ -198,10 +198,13 @@ def load_model_data(Wx_file_path, candidates_file_path, hub_matrix_file_path, me
     candidates = np.load(candidates_file_path)
     toc_cands = time.process_time()
     print(toc_cands - tic_cands, 'seconds...')
+    tic_hub = time.process_time()
     print('Loading Wx, mean_x, and hub_matrix...')
     Wx = np.load(Wx_file_path)
     mean_x = np.load(mean_x_file_path)
     hub_matrix = np.load(hub_matrix_file_path)
+    toc_hub = time.process_time()
+    print(toc_hub - tic_hub, 'seconds...')
     return Wx, candidates, hub_matrix, mean_x
 
 
