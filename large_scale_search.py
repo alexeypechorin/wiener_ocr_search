@@ -212,13 +212,13 @@ if __name__=='__main__':
     num_nn = 20
     block_size = 1000
 
-    if os.path.isfile(os.path.join(args.model_data_dir, 'hub.npy')) 
+    if os.path.isfile(os.path.join(args.model_data_dir, 'hub.npy')):
         print('loading hub matrix...')
         start_load = time.clock() 
         summed = np.load(os.path.join(args.model_data_dir, 'hub.npy'))
         print(time.clock() - start_load)
 
-        last_block = int((np.max(np.nonzero(hub))+1)/block_size)
+        last_block = int((np.max(np.nonzero(summed))+1)/block_size)
     else:
         print('creating hub matrix...')
         summed = np.zeros((candidates.shape[0], 1))
